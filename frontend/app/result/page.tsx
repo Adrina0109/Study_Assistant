@@ -64,145 +64,278 @@ export default function ResultPage() {
     setSubmitted(true);
   };
 
+  const resetQuiz = () => {
+    setSelected(new Array(data?.mcqs?.length || 0).fill(-1));
+    setSubmitted(false);
+    setScore(0);
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-lg font-semibold">
-        ⏳ Processing your text, please wait...
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Processing Your Notes</h2>
+          <p className="text-gray-600">AI is generating your study materials...</p>
+        </div>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-lg font-semibold">
-        No data. Go back and paste your notes.
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i className="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">No Data Found</h2>
+          <p className="text-gray-600 mb-6">Please go back and paste your study notes first.</p>
+          <button 
+            onClick={() => window.history.back()}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 p-6 flex justify-center">
-      <div className="bg-white shadow-xl p-8 rounded-xl max-w-3xl w-full text-gray-800">
-        <h1 className="text-2xl font-bold text-indigo-600 mb-6 text-center">
-          📘 Your AI-Generated Study Material
-        </h1>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3">
+            Your AI Study Materials
+          </h1>
+          <p className="text-gray-600 text-lg">Explore your personalized learning content</p>
+        </div>
 
-        {/* Tabs */}
-        <div className="flex flex-wrap gap-2 mb-6 justify-center">
+        {/* Navigation Tabs */}
+        <div className="bg-white rounded-2xl shadow-lg p-2 mb-8 flex flex-wrap gap-2 justify-center">
           {[
-            { key: "summary", label: "Summary" },
-            { key: "key_points", label: "Key Points" },
-            { key: "quiz", label: "Fill-in-the-Blanks" },
-            { key: "mcq", label: "MCQs" },
+            { key: "summary", label: "Summary", icon: "file-alt" },
+            { key: "key_points", label: "Key Points", icon: "list-check" },
+            { key: "quiz", label: "Fill-in-the-Blanks", icon: "edit" },
+            { key: "mcq", label: "Practice Quiz", icon: "question-circle" },
           ].map((t) => (
             <button
               key={t.key}
               onClick={() => setActiveTab(t.key as any)}
-              className={`px-4 py-2 rounded-lg font-semibold transition ${
+              className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition-all ${
                 activeTab === (t.key as any)
-                  ? "bg-indigo-600 text-white"
-                  : "bg-gray-700 text-white hover:bg-gray-600"
+                  ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md"
+                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-800"
               }`}
             >
+              <i className={`fas fa-${t.icon}`}></i>
               {t.label}
             </button>
           ))}
         </div>
 
-        {/* Summary */}
-        {activeTab === "summary" && (
-          <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-            {data.summary}
-          </p>
-        )}
-
-        {/* Key Points */}
-        {activeTab === "key_points" && (
-          <ul className="list-disc pl-6 space-y-2 text-gray-800">
-            {data.key_points.map((p, i) => (
-              <li key={i}>{p}</li>
-            ))}
-          </ul>
-        )}
-
-        {/* Fill-in-the-Blanks */}
-        {activeTab === "quiz" && (
-          <div className="space-y-4">
-            {data.quiz.length === 0 && <p className="text-gray-600">No questions generated.</p>}
-            {data.quiz.map((q, i) => (
-              <div key={i} className="bg-gray-100 p-4 rounded-lg">
-                <p className="font-semibold mb-2">Q{i + 1}. {q.question}</p>
-                <p className="text-sm text-gray-700">
-                  ✅ Answer: <span className="font-bold">{q.answer}</span>
+        {/* Content Area */}
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          {/* Summary Tab */}
+          {activeTab === "summary" && (
+            <div className="p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <i className="fas fa-file-alt text-indigo-600"></i>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800">AI Summary</h2>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap text-lg">
+                  {data.summary}
                 </p>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* MCQs */}
-        {activeTab === "mcq" && (
-          <div className="space-y-5">
-            {data.mcqs.length === 0 && <p className="text-gray-600">No MCQs generated.</p>}
-
-            {data.mcqs.map((q, qi) => (
-              <div key={qi} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <p className="font-semibold mb-3">Q{qi + 1}. {q.question}</p>
-
-                <div className="space-y-2">
-                  {q.options.map((opt, oi) => {
-                    const isSelected = selected[qi] === oi;
-                    const isCorrect = opt.toLowerCase() === q.answer.toLowerCase();
-                    const showColors = submitted && isSelected;
-                    return (
-                      <label
-                        key={oi}
-                        className={`flex items-center gap-3 p-2 rounded-md cursor-pointer border
-                          ${showColors ? (isCorrect ? "bg-green-100 border-green-400" : "bg-red-100 border-red-400") : "bg-white border-gray-200"}`}
-                      >
-                        <input
-                          type="radio"
-                          className="accent-indigo-600"
-                          name={`q-${qi}`}
-                          checked={isSelected}
-                          onChange={() => {
-                            const copy = [...selected];
-                            copy[qi] = oi;
-                            setSelected(copy);
-                          }}
-                        />
-                        <span>{opt}</span>
-                      </label>
-                    );
-                  })}
+          {/* Key Points Tab */}
+          {activeTab === "key_points" && (
+            <div className="p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <i className="fas fa-list-check text-green-600"></i>
                 </div>
+                <h2 className="text-2xl font-bold text-gray-800">Key Points</h2>
+              </div>
+              <div className="grid gap-4">
+                {data.key_points.map((p, i) => (
+                  <div key={i} className="flex items-start gap-4 bg-gray-50 rounded-xl p-5 border border-gray-200 hover:shadow-md transition-shadow">
+                    <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center flex-shrink-0 font-semibold mt-1">
+                      {i + 1}
+                    </div>
+                    <p className="text-gray-700 text-lg">{p}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
+          {/* Fill-in-the-Blanks Tab */}
+          {activeTab === "quiz" && (
+            <div className="p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <i className="fas fa-edit text-blue-600"></i>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800">Fill-in-the-Blanks</h2>
+              </div>
+              <div className="space-y-6">
+                {data.quiz.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <i className="fas fa-inbox text-4xl mb-3 opacity-50"></i>
+                    <p>No fill-in-the-blank questions generated.</p>
+                  </div>
+                )}
+                {data.quiz.map((q, i) => (
+                  <div key={i} className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+                    <div className="flex items-start gap-4">
+                      <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center flex-shrink-0 font-semibold mt-1">
+                        {i + 1}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-800 text-lg mb-3">{q.question}</p>
+                        <div className="bg-white rounded-lg p-4 border border-blue-100">
+                          <p className="text-sm text-gray-600 mb-1">Correct Answer:</p>
+                          <p className="font-bold text-blue-700 text-lg">{q.answer}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* MCQs Tab */}
+          {activeTab === "mcq" && (
+            <div className="p-8">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <i className="fas fa-question-circle text-purple-600"></i>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-800">Practice Quiz</h2>
+                </div>
                 {submitted && (
-                  <div className="mt-3 text-sm">
-                    <p className="font-medium">
-                      Correct answer: <span className="text-green-700">{q.answer}</span>
-                    </p>
-                    <p className="text-gray-700 mt-1">💡 {q.explanation}</p>
+                  <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-full font-bold shadow-lg">
+                    Score: {score} / {data.mcqs.length}
                   </div>
                 )}
               </div>
-            ))}
 
-            <div className="flex items-center justify-between">
-              <button
-                onClick={checkAnswers}
-                className="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold"
-              >
-                {submitted ? "Recheck" : "Check Answers"}
-              </button>
-              {submitted && (
-                <div className="font-semibold">
-                  Score: <span className="text-indigo-700">{score}</span> / {data.mcqs.length}
-                </div>
-              )}
+              <div className="space-y-6">
+                {data.mcqs.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <i className="fas fa-inbox text-4xl mb-3 opacity-50"></i>
+                    <p>No multiple choice questions generated.</p>
+                  </div>
+                )}
+
+                {data.mcqs.map((q, qi) => (
+                  <div key={qi} className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                    <div className="p-6">
+                      <div className="flex items-start gap-4 mb-4">
+                        <div className="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center flex-shrink-0 font-semibold">
+                          {qi + 1}
+                        </div>
+                        <p className="font-semibold text-gray-800 text-lg">{q.question}</p>
+                      </div>
+
+                      <div className="space-y-3">
+                        {q.options.map((opt, oi) => {
+                          const isSelected = selected[qi] === oi;
+                          const isCorrect = opt.toLowerCase() === q.answer.toLowerCase();
+                          const showColors = submitted && isSelected;
+                          
+                          return (
+                            <label
+                              key={oi}
+                              className={`flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                                showColors
+                                  ? isCorrect
+                                    ? "bg-green-50 border-green-400 shadow-sm"
+                                    : "bg-red-50 border-red-400 shadow-sm"
+                                  : isSelected
+                                  ? "bg-indigo-50 border-indigo-400"
+                                  : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                className="w-5 h-5 text-indigo-600 focus:ring-indigo-500"
+                                name={`q-${qi}`}
+                                checked={isSelected}
+                                onChange={() => {
+                                  if (!submitted) {
+                                    const copy = [...selected];
+                                    copy[qi] = oi;
+                                    setSelected(copy);
+                                  }
+                                }}
+                                disabled={submitted}
+                              />
+                              <span className={`font-medium ${
+                                showColors ? (isCorrect ? "text-green-800" : "text-red-800") : "text-gray-700"
+                              }`}>
+                                {opt}
+                              </span>
+                              {showColors && (
+                                <i className={`ml-auto fas ${
+                                  isCorrect ? "fa-check text-green-600" : "fa-times text-red-600"
+                                }`}></i>
+                              )}
+                            </label>
+                          );
+                        })}
+                      </div>
+
+                      {submitted && (
+                        <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                          <p className="font-medium text-blue-800 mb-2">
+                            <i className="fas fa-lightbulb mr-2"></i>
+                            Correct answer: <span className="font-bold">{q.answer}</span>
+                          </p>
+                          <p className="text-blue-700">{q.explanation}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
+                <button
+                  onClick={submitted ? resetQuiz : checkAnswers}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all ${
+                    submitted
+                      ? "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white shadow-md"
+                      : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl"
+                  }`}
+                >
+                  <i className={`fas ${submitted ? "fa-redo" : "fa-check"}`}></i>
+                  {submitted ? "Try Again" : "Check Answers"}
+                </button>
+                
+                {submitted && (
+                  <div className="text-center">
+                    <p className="text-lg font-semibold text-gray-700">
+                      {score === data.mcqs.length ? "Perfect! 🎉" : 
+                       score >= data.mcqs.length * 0.7 ? "Great job! 👍" : 
+                       "Keep practicing! "}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
