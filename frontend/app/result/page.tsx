@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
+import Select from "react-select";
 
 type MCQ = {
   question: string;
@@ -21,10 +23,15 @@ export default function ResultPage() {
   const [activeTab, setActiveTab] = useState<"summary" | "key_points" | "quiz" | "mcq">("summary");
   const [data, setData] = useState<ApiResult | null>(null);
 
-  // MCQ state
+  // Quiz states
   const [selected, setSelected] = useState<number[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
+
+  // Modal + Tags
+  const [showModal, setShowModal] = useState(false);
+  const [tags, setTags] = useState<string[]>([]);
+  const [existingTags, setExistingTags] = useState<string[]>(["AI", "Biology", "Physics", "Exam Prep"]);
 
   useEffect(() => {
     const userText = localStorage.getItem("userText");
@@ -52,6 +59,49 @@ export default function ResultPage() {
 
     fetchData();
   }, []);
+
+  // Save Note handler
+  const handleSaveNote = async () => {
+    if (!data) return;
+    const userText = localStorage.getItem("userText") || "";
+
+    const payload = {
+      original_text: userText,
+      summary: data.summary,
+      key_points: data.key_points || [],
+      quiz: data.quiz || [],
+      mcqs: (data.mcqs || []).map((m) => ({
+        question: m.question,
+        explanation: m.explanation,
+        options: (m.options || []).map((opt) => ({
+          option_text: opt,
+          is_correct: opt.toLowerCase() === (m.answer || "").toLowerCase(),
+        })),
+      })),
+      tags: tags,
+    };
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/notes/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        toast.success("✅ Note saved successfully!");
+        setShowModal(false);
+        setTags([]);
+      } else {
+        const text = await res.text();
+        console.error("Save failed response:", res.status, text);
+        toast.error("❌ Failed to save note.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("⚠️ Server error while saving note.");
+    }
+  };
 
   const checkAnswers = () => {
     if (!data?.mcqs) return;
@@ -91,7 +141,7 @@ export default function ResultPage() {
           </div>
           <h2 className="text-xl font-semibold text-gray-800 mb-2">No Data Found</h2>
           <p className="text-gray-600 mb-6">Please go back and paste your study notes first.</p>
-          <button 
+          <button
             onClick={() => window.history.back()}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
           >
@@ -164,7 +214,7 @@ export default function ResultPage() {
                 </div>
                 <h2 className="text-2xl font-bold text-gray-800">Key Points</h2>
               </div>
-              <div className="grid gap-4">
+              <div className="grid gap-4 p-6">
                 {data.key_points.map((p, i) => (
                   <div key={i} className="flex items-start gap-4 bg-gray-50 rounded-xl p-5 border border-gray-200 hover:shadow-md transition-shadow">
                     <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center flex-shrink-0 font-semibold mt-1">
@@ -186,7 +236,7 @@ export default function ResultPage() {
                 </div>
                 <h2 className="text-2xl font-bold text-gray-800">Fill-in-the-Blanks</h2>
               </div>
-              <div className="space-y-6">
+              <div className="space-y-6 p-6">
                 {data.quiz.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
                     <i className="fas fa-inbox text-4xl mb-3 opacity-50"></i>
@@ -196,9 +246,7 @@ export default function ResultPage() {
                 {data.quiz.map((q, i) => (
                   <div key={i} className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
                     <div className="flex items-start gap-4">
-                      <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center flex-shrink-0 font-semibold mt-1">
-                        {i + 1}
-                      </div>
+                      <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center flex-shrink-0 font-semibold mt-1">{i + 1}</div>
                       <div className="flex-1">
                         <p className="font-semibold text-gray-800 text-lg mb-3">{q.question}</p>
                         <div className="bg-white rounded-lg p-4 border border-blue-100">
@@ -242,9 +290,7 @@ export default function ResultPage() {
                   <div key={qi} className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                     <div className="p-6">
                       <div className="flex items-start gap-4 mb-4">
-                        <div className="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center flex-shrink-0 font-semibold">
-                          {qi + 1}
-                        </div>
+                        <div className="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center flex-shrink-0 font-semibold">{qi + 1}</div>
                         <p className="font-semibold text-gray-800 text-lg">{q.question}</p>
                       </div>
 
@@ -281,15 +327,11 @@ export default function ResultPage() {
                                 }}
                                 disabled={submitted}
                               />
-                              <span className={`font-medium ${
-                                showColors ? (isCorrect ? "text-green-800" : "text-red-800") : "text-gray-700"
-                              }`}>
+                              <span className={`font-medium ${showColors ? (isCorrect ? "text-green-800" : "text-red-800") : "text-gray-700"}`}>
                                 {opt}
                               </span>
                               {showColors && (
-                                <i className={`ml-auto fas ${
-                                  isCorrect ? "fa-check text-green-600" : "fa-times text-red-600"
-                                }`}></i>
+                                <i className={`ml-auto fas ${isCorrect ? "fa-check text-green-600" : "fa-times text-red-600"}`}></i>
                               )}
                             </label>
                           );
@@ -326,9 +368,9 @@ export default function ResultPage() {
                 {submitted && (
                   <div className="text-center">
                     <p className="text-lg font-semibold text-gray-700">
-                      {score === data.mcqs.length ? "Perfect! 🎉" : 
-                       score >= data.mcqs.length * 0.7 ? "Great job! 👍" : 
-                       "Keep practicing! "}
+                      {score === data.mcqs.length ? "Perfect! 🎉" :
+                       score >= data.mcqs.length * 0.7 ? "Great job! 👍" :
+                       "Keep practicing!"}
                     </p>
                   </div>
                 )}
@@ -336,7 +378,60 @@ export default function ResultPage() {
             </div>
           )}
         </div>
+
+        {/* Save Note Button */}
+        <div className="text-center mt-8">
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+          >
+            <i className="fas fa-save mr-2"></i> Save Note
+          </button>
+        </div>
       </div>
+
+      {/* Tag Modal */}
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
+          <div className="bg-white p-8 rounded-2xl shadow-2xl w-[90%] max-w-md relative">
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">Add Tags</h2>
+            <p className="text-gray-500 mb-4 text-sm">
+              Choose existing tags or type new ones
+            </p>
+            <Select
+              isMulti
+              options={existingTags.map((t) => ({ value: t, label: t }))}
+              value={tags.map((t) => ({ value: t, label: t }))}
+              onChange={(selected) => setTags(selected.map((s) => s.value))}
+              onCreateOption={(inputValue) => {
+                if (!existingTags.includes(inputValue)) {
+                  setExistingTags([...existingTags, inputValue]);
+                }
+                setTags([...tags, inputValue]);
+              }}
+              className="text-gray-800"
+              placeholder="Add or select tags..."
+            />
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-5 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-medium text-gray-700 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveNote}
+                className="px-5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold hover:opacity-90 transition"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Toaster position="bottom-right" />
     </div>
   );
 }
